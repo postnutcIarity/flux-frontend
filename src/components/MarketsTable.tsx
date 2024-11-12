@@ -23,6 +23,20 @@ function MarketsTable() {
     );
   }
 
+  const handleRowClick = (e: React.MouseEvent, marketName: string) => {
+    // Prevent navigation if text is being selected
+    if (window.getSelection()?.toString()) {
+      return;
+    }
+
+    // Prevent navigation if right-clicking
+    if (e.button === 2) {
+      return;
+    }
+
+    navigate(`/trade/${marketName.toLowerCase()}`);
+  };
+
   return (
     <div className="overflow-x-auto">
       <table className="w-full">
@@ -41,21 +55,25 @@ function MarketsTable() {
             <tr
               key={market.name}
               className="border-b border-gray-800 hover:bg-gray-800/50 transition-colors cursor-pointer"
-              onClick={() => navigate(`/trade/${market.name.toLowerCase()}`)}
+              onClick={(e) => handleRowClick(e, market.name)}
+              onContextMenu={(e) => e.stopPropagation()} // Prevent context menu from triggering row click
             >
               <td className="px-6 py-4">
                 <button 
                   className="text-gray-500 hover:text-yellow-500 transition-colors"
-                  onClick={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    // Add favorite functionality here
+                  }}
                 >
                   <Star className="h-5 w-5" />
                 </button>
               </td>
               <td className="px-6 py-4 font-medium">{market.name}</td>
-              <td className="px-6 py-4 text-gray-300">{market.maturity}</td>
-              <td className="px-6 py-4 text-gray-300">{market.liquidity}</td>
-              <td className="px-6 py-4 text-green-400">{market.longYieldAPY}</td>
-              <td className="px-6 py-4 text-blue-400">{market.fixedAPY}</td>
+              <td className="px-6 py-4 text-gray-300 select-text">{market.maturity}</td>
+              <td className="px-6 py-4 text-gray-300 select-text">{market.liquidity}</td>
+              <td className="px-6 py-4 text-green-400 select-text">{market.longYieldAPY}</td>
+              <td className="px-6 py-4 text-blue-400 select-text">{market.fixedAPY}</td>
             </tr>
           ))}
         </tbody>

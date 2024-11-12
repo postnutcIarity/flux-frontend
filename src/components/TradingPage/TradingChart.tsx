@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { createChart, ColorType, UTCTimestamp } from 'lightweight-charts';
 
 interface ChartData {
@@ -30,11 +30,11 @@ function generateDummyData(days: number): ChartData[] {
 export default function TradingChart() {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<any>(null);
+  const [activeTab, setActiveTab] = useState<'market-info' | 'charts'>('charts');
 
   useEffect(() => {
-    if (!chartContainerRef.current) return;
+    if (!chartContainerRef.current || activeTab !== 'charts') return;
 
-    // Create chart
     const chart = createChart(chartContainerRef.current, {
       layout: {
         background: { type: ColorType.Solid, color: 'transparent' },
@@ -45,7 +45,7 @@ export default function TradingChart() {
         horzLines: { color: '#1F2937' },
       },
       width: chartContainerRef.current.clientWidth,
-      height: 400,
+      height: window.innerWidth < 768 ? 400 : 600,
     });
 
     // Create line series
@@ -75,7 +75,8 @@ export default function TradingChart() {
     const handleResize = () => {
       if (chartContainerRef.current) {
         chart.applyOptions({
-          width: chartContainerRef.current.clientWidth
+          width: chartContainerRef.current.clientWidth,
+          height: window.innerWidth < 768 ? 400 : 600,
         });
       }
     };
@@ -87,23 +88,80 @@ export default function TradingChart() {
       window.removeEventListener('resize', handleResize);
       chart.remove();
     };
-  }, []);
+  }, [activeTab]);
 
   return (
-    <div className="bg-gray-800/30 rounded-lg p-4">
-      <div className="flex justify-between items-center mb-4">
-        <div className="flex space-x-4">
-          {['1D', '1W', '1M', '3M', 'ALL'].map((period) => (
-            <button
-              key={period}
-              className="px-3 py-1 text-sm rounded-md bg-gray-700 hover:bg-gray-600 text-gray-200 transition-colors"
-            >
-              {period}
-            </button>
-          ))}
-        </div>
+    <div className="bg-gray-800/30 rounded-lg h-[500px] lg:h-[700px]">
+      <div className="flex border-b border-gray-700 overflow-x-auto">
+        <button
+          onClick={() => setActiveTab('market-info')}
+          className={`px-3 lg:px-4 py-2 text-sm font-medium transition-colors relative whitespace-nowrap
+            ${activeTab === 'market-info'
+              ? 'text-white'
+              : 'text-gray-400 hover:text-white'
+            }
+          `}
+        >
+          Market Info
+          {activeTab === 'market-info' && (
+            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500" />
+          )}
+        </button>
+        <button
+          onClick={() => setActiveTab('charts')}
+          className={`px-3 lg:px-4 py-2 text-sm font-medium transition-colors relative whitespace-nowrap
+            ${activeTab === 'charts'
+              ? 'text-white'
+              : 'text-gray-400 hover:text-white'
+            }
+          `}
+        >
+          Charts
+          {activeTab === 'charts' && (
+            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500" />
+          )}
+        </button>
       </div>
-      <div ref={chartContainerRef} className="w-full" />
+
+      <div className="p-2 lg:p-4 h-[calc(100%-41px)]">
+        {activeTab === 'charts' && (
+          <>
+            <div className="flex space-x-2 lg:space-x-4 mb-4 overflow-x-auto">
+              {['1D', '1W', '1M', '3M', 'ALL'].map((period) => (
+                <button
+                  key={period}
+                  className="px-2 lg:px-3 py-1 text-sm rounded-md bg-gray-700 hover:bg-gray-600 text-gray-200 transition-colors whitespace-nowrap"
+                >
+                  {period}
+                </button>
+              ))}
+            </div>
+            <div ref={chartContainerRef} className="w-full h-[calc(100%-40px)]" />
+          </>
+        )}
+        {activeTab === 'market-info' && (
+          <div className="h-full overflow-y-auto">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className="bg-gray-900/50 p-4 rounded-lg">
+                <div className="text-sm text-gray-400 mb-1">Total Value Locked</div>
+                <div className="text-lg lg:text-xl font-semibold">$24.5M</div>
+              </div>
+              <div className="bg-gray-900/50 p-4 rounded-lg">
+                <div className="text-sm text-gray-400 mb-1">24h Volume</div>
+                <div className="text-lg lg:text-xl font-semibold">$1.2M</div>
+              </div>
+              <div className="bg-gray-900/50 p-4 rounded-lg">
+                <div className="text-sm text-gray-400 mb-1">Total Fees</div>
+                <div className="text-lg lg:text-xl font-semibold">$45.3K</div>
+              </div>
+              <div className="bg-gray-900/50 p-4 rounded-lg">
+                <div className="text-sm text-gray-400 mb-1">Unique Traders</div>
+                <div className="text-lg lg:text-xl font-semibold">1,234</div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

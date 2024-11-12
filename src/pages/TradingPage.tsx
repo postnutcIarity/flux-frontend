@@ -7,8 +7,7 @@ import TradeHistory from '../components/TradingPage/TradeHistory';
 import TradingInterface from '../components/TradingPage/TradingInterface';
 import { useGetEntityDetails } from '../hooks/useGetEntityDetails';
 import { useGetFungibleVaultsAmount } from '../hooks/useGetFungibleVaultsAmount';
-import { formatCurrency } from '../utils/formatters';
-import { useGateway } from '../hooks/useGateway';
+import { formatCurrency, formatRate } from '../utils/formatters';
 import { MARKET_ADDRESSES } from '../config/addresses';
 
 export default function TradingPage() {
@@ -29,7 +28,7 @@ export default function TradingPage() {
     liquidity: liquidityLoading ? 'Loading...' : formatCurrency(liquidityAmount),
     volume24h: '$2.73M',
     underlyingAPY: '8.5%',
-    impliedAPY: '13.55%'
+    impliedAPY: marketData ? formatRate(marketData.impliedRate) : 'Loading...'
   };
 
   if (marketLoading) {
@@ -44,11 +43,11 @@ export default function TradingPage() {
     <div className="container mx-auto px-4 py-8">
       <MarketInfo {...marketInfo} />
       
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        <div className="lg:col-span-2">
+      <div className="grid lg:grid-cols-3 gap-6 mb-8">
+        <div className="lg:col-span-2 order-2 lg:order-1">
           <TradingChart />
         </div>
-        <div>
+        <div className="h-full order-1 lg:order-2">
           <TradingInterface />
         </div>
       </div>

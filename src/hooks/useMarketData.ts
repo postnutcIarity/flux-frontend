@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { MARKET_ADDRESSES, MarketKey } from '../config/addresses';
 import { useGetEntityDetails } from './useGetEntityDetails';
 import { useGetFungibleVaultsAmount } from './useGetFungibleVaultsAmount';
-import { formatCurrency } from '../utils/formatters';
+import { formatCurrency, formatRate } from '../utils/formatters';
 
 export interface MarketData {
   name: MarketKey;
@@ -48,13 +48,14 @@ export function useMarketData() {
     }
 
     if (lsulpData) {
+      const impliedAPY = formatRate(lsulpData.impliedRate);
+      
       const marketData: MarketData[] = [{
         name: 'LSULP',
         maturity: lsulpData.maturityDate || 'N/A',
         liquidity: formatCurrency(liquidityAmount),
-        // These will be replaced with real data when available
-        longYieldAPY: '12.45%',
-        fixedAPY: '10.82%',
+        longYieldAPY: impliedAPY,
+        fixedAPY: impliedAPY,
       }];
 
       setMarkets(marketData);

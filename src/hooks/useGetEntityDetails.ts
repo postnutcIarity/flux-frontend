@@ -24,13 +24,27 @@ export const useGetEntityDetails = (address: string) => {
         const response = await gatewayApi.state.innerClient.stateEntityDetails(request);
         const details = response.items[0]?.details;
 
+        console.group('Entity Details Response');
+        console.log('Raw Response:', response);
+        console.log('Details:', details);
+
         if (details?.type === 'Component') {
           const filteredData = extractEntityFields(details.state);
+          console.log('Extracted Fields:', {
+            poolComponent: filteredData.poolComponent,
+            yieldTokenizerComponent: filteredData.yieldTokenizerComponent,
+            marketFee: filteredData.marketFee,
+            marketState: filteredData.marketState,
+            marketInfo: filteredData.marketInfo,
+            marketIsActive: filteredData.marketIsActive,
+            maturityDate: filteredData.maturityDate,
+          });
           setState(filteredData);
         } else {
           console.warn(`Unexpected details type: ${details?.type}`);
           setState(null);
         }
+        console.groupEnd();
       } catch (err) {
         console.error("Error fetching entity details:", err);
         setError(err as Error);
