@@ -20,10 +20,12 @@ const rdt = RadixDappToolkit({
 console.log('dApp Toolkit: ', rdt);
 
 const gateway = GatewayApiClient.initialize({
-  basePath: 'https://stokenet-gateway.radixdlt.com',
+  basePath: 'https://stokenet.radixdlt.com',
   applicationName: 'Wild dApp',
   applicationDappDefinitionAddress: 'account_tdx_2_12y7yjk7h0k5cd45au6kthphe83pxrutencm9xh3vtu3p8kllcgxf33',
 })
+console.log('Gateway:', gateway);
+
 
 createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
