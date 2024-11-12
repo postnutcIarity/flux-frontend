@@ -1,47 +1,27 @@
 import React from 'react';
 import { Star } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-
-const markets = [
-  {
-    name: 'LSULP',
-    maturity: '2024-06-30',
-    liquidity: '$24.5M',
-    longYieldAPY: '12.45%',
-    fixedAPY: '10.82%',
-  },
-  {
-    name: 'XRD',
-    maturity: '2024-07-15',
-    liquidity: '$18.2M',
-    longYieldAPY: '15.67%',
-    fixedAPY: '13.25%',
-  },
-  {
-    name: 'USDC',
-    maturity: '2024-06-30',
-    liquidity: '$45.8M',
-    longYieldAPY: '8.92%',
-    fixedAPY: '7.65%',
-  },
-  {
-    name: 'xBTC',
-    maturity: '2024-08-01',
-    liquidity: '$32.1M',
-    longYieldAPY: '14.23%',
-    fixedAPY: '12.48%',
-  },
-  {
-    name: 'xETH',
-    maturity: '2024-07-15',
-    liquidity: '$28.7M',
-    longYieldAPY: '13.85%',
-    fixedAPY: '11.93%',
-  },
-];
+import { useMarketData } from '../hooks/useMarketData';
 
 function MarketsTable() {
   const navigate = useNavigate();
+  const { markets, loading, error } = useMarketData();
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="text-lg text-gray-400">Loading market data...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="text-lg text-red-400">Error loading market data</div>
+      </div>
+    );
+  }
 
   return (
     <div className="overflow-x-auto">
