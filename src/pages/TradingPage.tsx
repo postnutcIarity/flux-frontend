@@ -1,7 +1,6 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useParams } from 'react-router-dom';
 import { useRadixDappToolkit } from '../hooks/useRadixDappToolkit';
-import { initializeGatewayApi } from '../config/radix';
 import TradingChart from '../components/TradingPage/TradingChart';
 import MarketInfo from '../components/TradingPage/MarketInfo';
 import TradeHistory from '../components/TradingPage/TradeHistory';
@@ -9,14 +8,16 @@ import TradingInterface from '../components/TradingPage/TradingInterface';
 import { useGetEntityDetails } from '../hooks/useGetEntityDetails';
 import { useGetFungibleVaultsAmount } from '../hooks/useGetFungibleVaultsAmount';
 import { formatCurrency } from '../utils/formatters';
+import { useGateway } from '../hooks/useGateway';
+import { MARKET_ADDRESSES } from '../config/addresses';
 
 export default function TradingPage() {
   const { marketId } = useParams();
-  const { isConnected, account } = useRadixDappToolkit();
+  const { isConnected } = useRadixDappToolkit();
 
   // Get market details
-  const { state: marketData } = useGetEntityDetails(
-    `component_tdx_2_1czuxwr7zax9wdk4dfc4n8lcqyankk39my5vfzymx4uu55gm5sv8vcr`
+  const { state: marketData, loading: marketLoading } = useGetEntityDetails(
+    MARKET_ADDRESSES.LSULP
   );
 
   // Get liquidity data
@@ -31,28 +32,13 @@ export default function TradingPage() {
     impliedAPY: '13.55%'
   };
 
-  useEffect(() => {
-    const fetchMarketData = async () => {
-      if (!marketId) return;
-
-      try {
-        const gatewayApi = initializeGatewayApi();
-        if (!gatewayApi) return;
-
-        const response = await gatewayApi.state.getEntityDetails({
-          addresses: [marketId],
-        });
-
-        console.log('Market data:', response);
-      } catch (error) {
-        console.error('Error fetching market data:', error);
-      }
-    };
-
-    if (isConnected) {
-      fetchMarketData();
-    }
-  }, [marketId, isConnected]);
+  if (marketLoading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center">Loading market data...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
