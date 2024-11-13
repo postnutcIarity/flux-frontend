@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Calculator } from 'lucide-react';
 import { useConnectButtonState } from '../../../hooks/useConnectButtonState';
 import { useFungibleTokenValue } from '../../../hooks/useFungibleTokenValue';
-import { MARKET_RESOURCES } from '../../../config/addresses';
+import { MARKET_INFO } from '../../../config/addresses';
 
 export default function LiquidityInterface() {
   const connectButtonState = useConnectButtonState();
@@ -13,9 +13,9 @@ export default function LiquidityInterface() {
   const [isLoading, setIsLoading] = useState(false);
 
   // Get token balances
-  const ptBalance = useFungibleTokenValue(MARKET_RESOURCES.PT);
-  const lsuBalance = useFungibleTokenValue(MARKET_RESOURCES.LSU);
-  const poolUnitBalance = useFungibleTokenValue(MARKET_RESOURCES.POOL_UNIT);
+  const ptBalance = useFungibleTokenValue(MARKET_INFO.ptResource);
+  const lsuBalance = useFungibleTokenValue(MARKET_INFO.assetResource);
+  const poolUnitBalance = useFungibleTokenValue(MARKET_INFO.poolUnitResource);
 
   const getBalance = (token: string) => {
     switch (token) {

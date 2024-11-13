@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Calculator } from 'lucide-react';
 import { useConnectButtonState } from '../../../hooks/useConnectButtonState';
 import { useFungibleTokenValue } from '../../../hooks/useFungibleTokenValue';
-import { MARKET_RESOURCES } from '../../../config/addresses';
+import { MARKET_INFO } from '../../../config/addresses';
 
 export default function TokenizeInterface() {
   const connectButtonState = useConnectButtonState();
@@ -10,9 +10,9 @@ export default function TokenizeInterface() {
   const [isLoading, setIsLoading] = useState(false);
 
   // Get token balances
-  const lsuBalance = useFungibleTokenValue(MARKET_RESOURCES.LSU);
-  const ptBalance = useFungibleTokenValue(MARKET_RESOURCES.PT);
-  const ytBalance = useFungibleTokenValue(MARKET_RESOURCES.YT);
+  const lsuBalance = useFungibleTokenValue(MARKET_INFO.assetResource);
+  const ptBalance = useFungibleTokenValue(MARKET_INFO.ptResource);
+  const ytBalance = useFungibleTokenValue(MARKET_INFO.ytResource);
 
   const handleTokenize = async () => {
     if (connectButtonState !== 'success' || !inputAmount) return;

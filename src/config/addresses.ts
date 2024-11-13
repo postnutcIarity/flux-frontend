@@ -6,11 +6,14 @@ export const MARKET_ADDRESSES = {
   
   export type MarketKey = keyof typeof MARKET_ADDRESSES;
 
-  export const MARKET_RESOURCES = {
-    LSU: 'resource_tdx_2_1t45l9ku3r5mwxazht2qutmhhk3660hqqvxkkyl8rxs20n9k2zv0w7t',
-    PT: 'resource_tdx_2_1tkw4wd6hzj84xts0zm59ck60nemps356vjzfcpfa8vf80zflxtd4sc',
-    YT: 'resource_tdx_2_1nfmp4mzkcujusf26gq5s6ytkel3pazmr06pflq4jqcnhemyw2zfk2p',
-    POOL_UNIT: 'resource_tdx_2_1t4lwm0xrc0ydmg0dsrjhkj8pv4vzkj28m3e9ugpxxevtav6ytjpdrk'
+  export const MARKET_INFO = {
+    assetResource: 'resource_tdx_2_1t45l9ku3r5mwxazht2qutmhhk3660hqqvxkkyl8rxs20n9k2zv0w7t',
+    ptResource: 'resource_tdx_2_1tkw4wd6hzj84xts0zm59ck60nemps356vjzfcpfa8vf80zflxtd4sc',
+    ytResource: 'resource_tdx_2_1nfmp4mzkcujusf26gq5s6ytkel3pazmr06pflq4jqcnhemyw2zfk2p',
+    poolUnitResource: 'resource_tdx_2_1t4lwm0xrc0ydmg0dsrjhkj8pv4vzkj28m3e9ugpxxevtav6ytjpdrk',
+    yieldAMMComponent: 'component_tdx_2_1czuxwr7zax9wdk4dfc4n8lcqyankk39my5vfzymx4uu55gm5sv8vcr',
   } as const;
-
-  export type MarketResource = keyof typeof MARKET_RESOURCES;
+  
+  // Define MarketInfo as the inferred type of MARKET_INFO
+  export type MarketInfo = typeof MARKET_INFO;
+  
