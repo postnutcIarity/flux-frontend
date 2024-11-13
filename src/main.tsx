@@ -12,7 +12,7 @@ if (!rootElement) throw new Error('Failed to find the root element');
 
 const rdt = RadixDappToolkit({
   dAppDefinitionAddress:
-    'account_tdx_2_12y7yjk7h0k5cd45au6kthphe83pxrutencm9xh3vtu3p8kllcgxf33',
+    'account_tdx_2_12xa7gxk0trk3ddmklsttqxaf7utrec44mpcyx6c8qa4v8tykm9j5h2',
   networkId: RadixNetwork.Stokenet, // network ID 2 is for the stokenet test network, network ID 1 is for mainnet
   applicationName: 'Wild dApp',
   applicationVersion: '1.0.0',
@@ -22,7 +22,7 @@ console.log('dApp Toolkit: ', rdt);
 const gateway = GatewayApiClient.initialize({
   basePath: 'https://stokenet.radixdlt.com',
   applicationName: 'Wild dApp',
-  applicationDappDefinitionAddress: 'account_tdx_2_12y7yjk7h0k5cd45au6kthphe83pxrutencm9xh3vtu3p8kllcgxf33',
+  applicationDappDefinitionAddress: 'account_tdx_2_12xa7gxk0trk3ddmklsttqxaf7utrec44mpcyx6c8qa4v8tykm9j5h2',
 })
 console.log('Gateway:', gateway);
 
