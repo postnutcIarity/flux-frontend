@@ -12,6 +12,7 @@ export const MARKET_ADDRESSES = {
     ytResource: 'resource_tdx_2_1nfmp4mzkcujusf26gq5s6ytkel3pazmr06pflq4jqcnhemyw2zfk2p',
     poolUnitResource: 'resource_tdx_2_1t4lwm0xrc0ydmg0dsrjhkj8pv4vzkj28m3e9ugpxxevtav6ytjpdrk',
     yieldAMMComponent: 'component_tdx_2_1czuxwr7zax9wdk4dfc4n8lcqyankk39my5vfzymx4uu55gm5sv8vcr',
+    fluxTokenizerComponent: 'component_tdx_2_1czut7le0ekyhjvlgkqzt0ug49la0takuhds27lmpl5ejm3lmggn7np',
   } as const;
   
   // Define MarketInfo as the inferred type of MARKET_INFO

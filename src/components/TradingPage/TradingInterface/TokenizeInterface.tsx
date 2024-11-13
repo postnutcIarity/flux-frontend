@@ -3,26 +3,55 @@ import { Calculator } from 'lucide-react';
 import { useConnectButtonState } from '../../../hooks/useConnectButtonState';
 import { useFungibleTokenValue } from '../../../hooks/useFungibleTokenValue';
 import { MARKET_INFO } from '../../../config/addresses';
+import { useSendTransactionManifest } from '../../../hooks/useSendTransactionManifest';
+import { useAccounts } from '../../../hooks/useAccounts';
 
 export default function TokenizeInterface() {
-  const connectButtonState = useConnectButtonState();
   const [inputAmount, setInputAmount] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const { state: accountState } = useAccounts();
+  const sendTransactionManifest = useSendTransactionManifest();
+  const connectButtonState = useConnectButtonState();
 
   // Get token balances
   const lsuBalance = useFungibleTokenValue(MARKET_INFO.assetResource);
   const ptBalance = useFungibleTokenValue(MARKET_INFO.ptResource);
   const ytBalance = useFungibleTokenValue(MARKET_INFO.ytResource);
 
+  const validateTransaction = () => {
+    if (!accountState.accounts[0]) {
+      throw new Error('Please connect your wallet');
+    }
+
+    const amount = parseFloat(inputAmount);
+    if (isNaN(amount) || amount <= 0) {
+      throw new Error('Please enter a valid amount');
+    }
+
+    const balance = parseFloat(lsuBalance || '0');
+    if (amount > balance) {
+      throw new Error('Insufficient LSU balance');
+    }
+
+    return {
+      accountAddress: accountState.accounts[0].address,
+      assetAmount: amount,
+    };
+  };
+
   const handleTokenize = async () => {
-    if (connectButtonState !== 'success' || !inputAmount) return;
     setIsLoading(true);
+    setError(null);
 
     try {
-      // Tokenize logic here
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulated transaction
-    } catch (error) {
-      console.error('Transaction error:', error);
+      const params = validateTransaction();
+      await sendTransactionManifest().tokenizeYield(params);
+      setInputAmount('');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Transaction failed';
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -47,8 +76,12 @@ export default function TokenizeInterface() {
               type="number"
               placeholder="0.0"
               value={inputAmount}
-              onChange={(e) => setInputAmount(e.target.value)}
+              onChange={(e) => {
+                setInputAmount(e.target.value);
+                setError(null);
+              }}
               className="bg-transparent text-right text-lg focus:outline-none w-1/2"
+              disabled={isLoading}
             />
           </div>
           <div className="text-right text-sm text-gray-400 mt-1">
@@ -96,18 +129,32 @@ export default function TokenizeInterface() {
         </div>
       </div>
 
+      {error && (
+        <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+          {error}
+        </div>
+      )}
+
       <button
         onClick={handleTokenize}
-        disabled={!isConnected || isLoading}
+        disabled={!isConnected || isLoading || !inputAmount}
         className={`w-full py-4 rounded-lg font-semibold transition-colors ${
           isConnected
             ? isLoading
               ? 'bg-blue-600 cursor-wait'
+              : !inputAmount
+              ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
               : 'bg-blue-500 hover:bg-blue-600'
             : 'bg-gray-700 text-gray-400 cursor-not-allowed'
         }`}
       >
-        {isConnected ? (isLoading ? 'Processing...' : 'Tokenize') : 'Connect Wallet'}
+        {!isConnected 
+          ? 'Connect Wallet' 
+          : isLoading 
+          ? 'Processing...' 
+          : !inputAmount 
+          ? 'Enter an amount' 
+          : 'Tokenize'}
       </button>
 
       {isConnected && (

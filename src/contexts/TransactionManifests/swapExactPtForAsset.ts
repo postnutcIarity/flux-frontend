@@ -2,6 +2,7 @@ import { MarketInfo } from "../../config/addresses";
 
 export const TransactionManifests = ({
   yieldAMMComponent,
+  fluxTokenizerComponent,
   ptResource,
   ytResource,
   poolUnitResource,
@@ -187,7 +188,7 @@ export const TransactionManifests = ({
         Bucket("LSU Bucket")
       ;
       CALL_METHOD
-        Address("${yieldAMMComponent}")
+        Address("${fluxTokenizerComponent}")
         "tokenize_yield"
         Bucket("LSU Bucket")
       ;
