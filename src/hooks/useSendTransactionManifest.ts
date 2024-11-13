@@ -3,119 +3,87 @@ import { TransactionManifests } from '../contexts/TransactionManifests/swapExact
 import { MARKET_INFO } from '../config/addresses';
 import { useSendTransaction } from './useSendTransaction';
 import { useGetCommittedDetails } from './useGetCommittedDetails';
-import { ResultAsync } from 'neverthrow';
-
-interface SwapParams {
-  accountAddress: string;
-  inputTokenValue: number;
-  outputTokenValue: number;
-}
-
-interface LiquidityParams {
-  accountAddress: string;
-  ptAmount: number;
-  assetAmount: number;
-}
-
-interface RemoveLiquidityParams {
-  accountAddress: string;
-  poolUnits: number;
-}
-
-interface TokenizeParams {
-  accountAddress: string;
-  assetAmount: number;
-}
 
 export const useSendTransactionManifest = () => {
   const transactionManifests = TransactionManifests(MARKET_INFO);
   const sendTransaction = useSendTransaction();
   const getCommittedDetails = useGetCommittedDetails();
 
-  const handleTransaction = async (
-    manifest: string,
-    message: string
-  ) => {
-    const result = await ResultAsync.fromPromise(
-      sendTransaction(manifest, message),
-      (error: any) => new Error(error?.message || 'Transaction failed')
-    );
-
-    if (result.isErr()) {
-      throw result.error;
-    }
-
-    const { transactionIntentHash } = result.value;
-    
-    const details = await ResultAsync.fromPromise(
-      getCommittedDetails(transactionIntentHash),
-      (error: any) => new Error(error?.message || 'Failed to get transaction details')
-    );
-
-    if (details.isErr()) {
-      throw details.error;
-    }
-
-    return details.value;
-  };
-
   return useCallback(
     () => ({
-      swapExactPtForAsset: async (params: SwapParams) => {
+      swapExactPtForAsset: async (params: {
+        accountAddress: string;
+        inputTokenValue: number;
+        outputTokenValue: number;
+      }) => {
         try {
           if (!params.accountAddress) {
             throw new Error('Wallet not connected');
           }
 
           if (params.inputTokenValue <= 0) {
-            throw new Error('Invalid input amount');
+            throw new Error('Invalid token amount');
           }
 
           const manifest = transactionManifests.swapExactPtForAsset(params);
-          return await handleTransaction(manifest, 'Swap PT for LSU');
+          const result = await sendTransaction(manifest, 'Swap PT for Asset');
+          return result.andThen((tx) => getCommittedDetails(tx.transactionIntentHash));
         } catch (error) {
           console.error('PT to LSU swap error:', error);
-          throw error instanceof Error ? error : new Error('Swap failed');
+          throw error instanceof Error ? error : new Error('Failed to swap PT for LSU');
         }
       },
 
-      swapExactAssetForPt: async (params: SwapParams) => {
+      swapExactAssetForPt: async (params: {
+        accountAddress: string;
+        inputTokenValue: number;
+        outputTokenValue: number;
+      }) => {
         try {
           if (!params.accountAddress) {
             throw new Error('Wallet not connected');
           }
 
           if (params.inputTokenValue <= 0) {
-            throw new Error('Invalid input amount');
+            throw new Error('Invalid token amount');
           }
 
           const manifest = transactionManifests.swapExactAssetForPt(params);
-          return await handleTransaction(manifest, 'Swap LSU for PT');
+          const result = await sendTransaction(manifest, 'Swap Asset for PT');
+          return result.andThen((tx) => getCommittedDetails(tx.transactionIntentHash));
         } catch (error) {
           console.error('LSU to PT swap error:', error);
-          throw error instanceof Error ? error : new Error('Swap failed');
+          throw error instanceof Error ? error : new Error('Failed to swap LSU for PT');
         }
       },
 
-      addLiquidity: async (params: LiquidityParams) => {
+      addLiquidity: async (params: {
+        accountAddress: string;
+        ptAmount: number;
+        assetAmount: number;
+      }) => {
         try {
           if (!params.accountAddress) {
             throw new Error('Wallet not connected');
           }
 
           if (params.ptAmount <= 0 || params.assetAmount <= 0) {
-            throw new Error('Invalid liquidity amounts');
+            throw new Error('Invalid token amounts');
           }
 
           const manifest = transactionManifests.addLiquidity(params);
-          return await handleTransaction(manifest, 'Add Liquidity');
+          const result = await sendTransaction(manifest, 'Add Liquidity');
+          return result.andThen((tx) => getCommittedDetails(tx.transactionIntentHash));
         } catch (error) {
           console.error('Add liquidity error:', error);
           throw error instanceof Error ? error : new Error('Failed to add liquidity');
         }
       },
 
-      removeLiquidity: async (params: RemoveLiquidityParams) => {
+      removeLiquidity: async (params: {
+        accountAddress: string;
+        poolUnits: number;
+      }) => {
         try {
           if (!params.accountAddress) {
             throw new Error('Wallet not connected');
@@ -126,30 +94,58 @@ export const useSendTransactionManifest = () => {
           }
 
           const manifest = transactionManifests.removeLiquidity(params);
-          return await handleTransaction(manifest, 'Remove Liquidity');
+          const result = await sendTransaction(manifest, 'Remove Liquidity');
+          return result.andThen((tx) => getCommittedDetails(tx.transactionIntentHash));
         } catch (error) {
           console.error('Remove liquidity error:', error);
           throw error instanceof Error ? error : new Error('Failed to remove liquidity');
         }
       },
 
-      tokenizeYield: async (params: TokenizeParams) => {
+      tokenizeYield: async (params: {
+        accountAddress: string;
+        assetAmount: number;
+      }) => {
         try {
           if (!params.accountAddress) {
             throw new Error('Wallet not connected');
           }
 
           if (params.assetAmount <= 0) {
-            throw new Error('Invalid asset amount');
+            throw new Error('Invalid token amount');
           }
 
           const manifest = transactionManifests.tokenizeYield(params);
-          return await handleTransaction(manifest, 'Tokenize Yield');
+          const result = await sendTransaction(manifest, 'Tokenize Yield');
+          return result.andThen((tx) => getCommittedDetails(tx.transactionIntentHash));
         } catch (error) {
           console.error('Tokenize yield error:', error);
           throw error instanceof Error ? error : new Error('Failed to tokenize yield');
         }
-      }
+      },
+
+      redeemTokens: async (params: {
+        accountAddress: string;
+        ptAmount: number;
+        ytAmount: number;
+      }) => {
+        try {
+          if (!params.accountAddress) {
+            throw new Error('Wallet not connected');
+          }
+
+          if (params.ptAmount <= 0 || params.ytAmount <= 0) {
+            throw new Error('Invalid token amounts');
+          }
+
+          const manifest = transactionManifests.redeemTokens(params);
+          const result = await sendTransaction(manifest, 'Redeem Tokens');
+          return result.andThen((tx) => getCommittedDetails(tx.transactionIntentHash));
+        } catch (error) {
+          console.error('Redeem tokens error:', error);
+          throw error instanceof Error ? error : new Error('Failed to redeem tokens');
+        }
+      },
     }),
     [sendTransaction, getCommittedDetails, transactionManifests]
   );

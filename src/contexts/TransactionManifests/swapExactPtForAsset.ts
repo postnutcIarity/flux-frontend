@@ -2,11 +2,11 @@ import { MarketInfo } from "../../config/addresses";
 
 export const TransactionManifests = ({
   yieldAMMComponent,
-  fluxTokenizerComponent,
   ptResource,
   ytResource,
   poolUnitResource,
   assetResource,
+  fluxTokenizerComponent,
 }: MarketInfo) => {
   const swapExactPtForAsset = ({
     accountAddress,
@@ -28,8 +28,9 @@ export const TransactionManifests = ({
         Address("${ptResource}")
         Decimal("${inputTokenValue}")
       ;
-      TAKE_ALL_FROM_WORKTOP
+      TAKE_FROM_WORKTOP
         Address("${ptResource}")
+        Decimal("${inputTokenValue}")
         Bucket("pt_bucket")
       ;
       CALL_METHOD
@@ -65,8 +66,9 @@ export const TransactionManifests = ({
         Address("${assetResource}")
         Decimal("${inputTokenValue}")
       ;
-      TAKE_ALL_FROM_WORKTOP
+      TAKE_FROM_WORKTOP
         Address("${assetResource}")
+        Decimal("${inputTokenValue}")
         Bucket("asset_bucket")
       ;
       CALL_METHOD
@@ -102,18 +104,20 @@ export const TransactionManifests = ({
         Address("${ptResource}")
         Decimal("${ptAmount}")
       ;
-      TAKE_ALL_FROM_WORKTOP
-        Address("${ptResource}")
-        Bucket("pt_bucket")
-      ;
       CALL_METHOD
         Address("${accountAddress}")
         "withdraw"
         Address("${assetResource}")
         Decimal("${assetAmount}")
       ;
-      TAKE_ALL_FROM_WORKTOP
+      TAKE_FROM_WORKTOP
+        Address("${ptResource}")
+        Decimal("${ptAmount}")
+        Bucket("pt_bucket")
+      ;
+      TAKE_FROM_WORKTOP
         Address("${assetResource}")
+        Decimal("${assetAmount}")
         Bucket("asset_bucket")
       ;
       CALL_METHOD
@@ -148,14 +152,15 @@ export const TransactionManifests = ({
         Address("${poolUnitResource}")
         Decimal("${poolUnits}")
       ;
-      TAKE_ALL_FROM_WORKTOP
+      TAKE_FROM_WORKTOP
         Address("${poolUnitResource}")
-        Bucket("pool_units")
+        Decimal("${poolUnits}")
+        Bucket("pool_units_bucket")
       ;
       CALL_METHOD
         Address("${yieldAMMComponent}")
         "remove_liquidity"
-        Bucket("pool_units")
+        Bucket("pool_units_bucket")
       ;
       CALL_METHOD
         Address("${accountAddress}")
@@ -200,11 +205,60 @@ export const TransactionManifests = ({
     `.trim();
   };
 
+  const redeemTokens = ({
+    accountAddress,
+    ptAmount,
+    ytAmount,
+  }: {
+    accountAddress: string;
+    ptAmount: number;
+    ytAmount: number;
+  }) => {
+    if (!accountAddress || !ptAmount || !ytAmount) {
+      throw new Error('Invalid transaction parameters');
+    }
+
+    return `
+      CALL_METHOD
+        Address("${accountAddress}")
+        "withdraw"
+        Address("${ptResource}")
+        Decimal("${ptAmount}")
+      ;
+      CALL_METHOD
+        Address("${accountAddress}")
+        "withdraw"
+        Address("${ytResource}")
+        Decimal("${ytAmount}")
+      ;
+      TAKE_ALL_FROM_WORKTOP
+        Address("${ptResource}")
+        Bucket("PT Bucket")
+      ;
+      TAKE_ALL_FROM_WORKTOP
+        Address("${ytResource}")
+        Bucket("YT Bucket")
+      ;
+      CALL_METHOD
+        Address("${fluxTokenizerComponent}")
+        "redeem"
+        Bucket("PT Bucket")
+        Bucket("YT Bucket")
+      ;
+      CALL_METHOD
+        Address("${accountAddress}")
+        "deposit_batch"
+        Expression("ENTIRE_WORKTOP")
+      ;
+    `.trim();
+  };
+
   return {
     swapExactPtForAsset,
     swapExactAssetForPt,
     addLiquidity,
     removeLiquidity,
     tokenizeYield,
+    redeemTokens,
   };
 };
