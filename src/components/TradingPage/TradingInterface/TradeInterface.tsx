@@ -4,6 +4,7 @@ import { useFungibleTokenValue } from '../../../hooks/useFungibleTokenValue';
 import { MARKET_INFO } from '../../../config/addresses';
 import { useConnectButtonState } from '../../../hooks/useConnectButtonState';
 import { useSendTransactionManifest } from '../../../hooks/useSendTransactionManifest';
+import { useAccounts } from '../../../hooks/useAccounts';
 
 export default function TradeInterface() {
   const connectButtonState = useConnectButtonState();
@@ -12,7 +13,8 @@ export default function TradeInterface() {
   const [isLoading, setIsLoading] = useState(false);
   const [payToken, setPayToken] = useState('PT');
   const [receiveToken, setReceiveToken] = useState('LSU');
-  const swapExactPtForAsset = useSendTransactionManifest()()
+  const { state: accountState } = useAccounts();
+  const sendTransactionManifest = useSendTransactionManifest();
 
   // Get token balances
   const ptBalance = useFungibleTokenValue(MARKET_INFO.ptResource);
@@ -47,12 +49,22 @@ export default function TradeInterface() {
   };
 
   const handleTrade = async () => {
-    if (connectButtonState !== 'success' || !inputAmount) return;
+    if (connectButtonState !== 'success' || !inputAmount || !accountState.accounts[0]) return;
     setIsLoading(true);
 
     try {
-      // Trading logic here
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulated transaction
+      const accountAddress = accountState.accounts[0].address;
+      const inputTokenValue = parseFloat(inputAmount);
+      const outputTokenValue = parseFloat(outputAmount);
+
+      if (payToken === 'PT') {
+        await sendTransactionManifest().swapExactPtForAsset({
+          accountAddress,
+          inputTokenValue,
+          outputTokenValue,
+        });
+      }
+      // Add other swap types here when needed
     } catch (error) {
       console.error('Transaction error:', error);
     } finally {
