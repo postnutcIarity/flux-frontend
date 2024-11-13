@@ -27,6 +27,16 @@ export default function TradeInterface() {
     }
   };
 
+  const handlePayTokenChange = (newToken: string) => {
+    setPayToken(newToken);
+    setReceiveToken(newToken === 'PT' ? 'LSU' : 'PT');
+  };
+
+  const handleReceiveTokenChange = (newToken: string) => {
+    setReceiveToken(newToken);
+    setPayToken(newToken === 'PT' ? 'LSU' : 'PT');
+  };
+
   const handleSwapTokens = () => {
     setPayToken(receiveToken);
     setReceiveToken(payToken);
@@ -66,7 +76,7 @@ export default function TradeInterface() {
               <select 
                 className="bg-transparent text-lg focus:outline-none"
                 value={payToken}
-                onChange={(e) => setPayToken(e.target.value)}
+                onChange={(e) => handlePayTokenChange(e.target.value)}
               >
                 <option value="PT">PT</option>
                 <option value="LSU">LSU</option>
@@ -101,7 +111,7 @@ export default function TradeInterface() {
               <select 
                 className="bg-transparent text-lg focus:outline-none"
                 value={receiveToken}
-                onChange={(e) => setReceiveToken(e.target.value)}
+                onChange={(e) => handleReceiveTokenChange(e.target.value)}
               >
                 <option value="LSU">LSU</option>
                 <option value="PT">PT</option>
