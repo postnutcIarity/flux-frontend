@@ -22,6 +22,11 @@ interface RemoveLiquidityParams {
   poolUnits: number;
 }
 
+interface TokenizeParams {
+  accountAddress: string;
+  assetAmount: number;
+}
+
 export const useSendTransactionManifest = () => {
   const transactionManifests = TransactionManifests(MARKET_INFO);
   const sendTransaction = useSendTransaction();
@@ -125,6 +130,24 @@ export const useSendTransactionManifest = () => {
         } catch (error) {
           console.error('Remove liquidity error:', error);
           throw error instanceof Error ? error : new Error('Failed to remove liquidity');
+        }
+      },
+
+      tokenizeYield: async (params: TokenizeParams) => {
+        try {
+          if (!params.accountAddress) {
+            throw new Error('Wallet not connected');
+          }
+
+          if (params.assetAmount <= 0) {
+            throw new Error('Invalid asset amount');
+          }
+
+          const manifest = transactionManifests.tokenizeYield(params);
+          return await handleTransaction(manifest, 'Tokenize Yield');
+        } catch (error) {
+          console.error('Tokenize yield error:', error);
+          throw error instanceof Error ? error : new Error('Failed to tokenize yield');
         }
       }
     }),

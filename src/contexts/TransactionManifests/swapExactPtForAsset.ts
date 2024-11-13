@@ -164,10 +164,46 @@ export const TransactionManifests = ({
     `.trim();
   };
 
+  const tokenizeYield = ({
+    accountAddress,
+    assetAmount,
+  }: {
+    accountAddress: string;
+    assetAmount: number;
+  }) => {
+    if (!accountAddress || !assetAmount) {
+      throw new Error('Invalid transaction parameters');
+    }
+
+    return `
+      CALL_METHOD
+        Address("${accountAddress}")
+        "withdraw"
+        Address("${assetResource}")
+        Decimal("${assetAmount}")
+      ;
+      TAKE_ALL_FROM_WORKTOP
+        Address("${assetResource}")
+        Bucket("LSU Bucket")
+      ;
+      CALL_METHOD
+        Address("${yieldAMMComponent}")
+        "tokenize_yield"
+        Bucket("LSU Bucket")
+      ;
+      CALL_METHOD
+        Address("${accountAddress}")
+        "deposit_batch"
+        Expression("ENTIRE_WORKTOP")
+      ;
+    `.trim();
+  };
+
   return {
     swapExactPtForAsset,
     swapExactAssetForPt,
     addLiquidity,
     removeLiquidity,
+    tokenizeYield,
   };
 };
