@@ -1,15 +1,15 @@
 import { useEffect, useState } from 'react'
 import { useDappToolkit } from './useDappToolkit'
+import { useAccounts } from './useAccounts'
 
 export const useConnectButtonState = () => {
   const dAppToolkit = useDappToolkit()
-  const [state, setState] = useState<
-    'pending' | 'success' | 'error' | 'default'
-  >('default')
+  const { state: accountState } = useAccounts()
+  const [state, setState] = useState<'pending' | 'success' | 'error' | 'default'>('default')
 
   useEffect(() => {
-    const subscription = dAppToolkit.buttonApi.status$.subscribe((state) => {
-      setState(state)
+    const subscription = dAppToolkit.buttonApi.status$.subscribe((buttonState) => {
+      setState(buttonState)
     })
 
     return () => {
@@ -17,5 +17,6 @@ export const useConnectButtonState = () => {
     }
   }, [dAppToolkit])
 
-  return state
+  // Return success if the account is connected, otherwise return the button state
+  return accountState.isConnected ? 'success' : state
 }

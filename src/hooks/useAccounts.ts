@@ -16,6 +16,13 @@ export type AccountWithTokens = Account &
     nonFungibleTokens: Record<string, NonFungibleResource[]>
   }
 
+export type AccountState = {
+  accounts: AccountWithTokens[]
+  status: 'pending' | 'success' | 'error'
+  hasLoaded: boolean
+  isConnected: boolean
+}
+
 const useWithTokens = (stateApi: State) => {
   return useCallback(
     (accounts: Account[]) =>
@@ -51,30 +58,43 @@ const useWithTokens = (stateApi: State) => {
 export const useAccounts = () => {
   const dAppToolkit = useDappToolkit()
   const gatewayApi = useGateway()
-  const [state, setState] = useState<{
-    accounts: AccountWithTokens[]
-    status: 'pending' | 'success' | 'error'
-    hasLoaded: boolean
-  }>({ accounts: [], status: 'pending', hasLoaded: false })
+  const [state, setState] = useState<AccountState>({ 
+    accounts: [], 
+    status: 'pending', 
+    hasLoaded: false,
+    isConnected: false
+  })
 
   const withTokens = useWithTokens(gatewayApi.state)
 
   useEffect(() => {
     const subscription = dAppToolkit.walletApi.walletData$
       .pipe(
-        map((walletData) => walletData.accounts),
+        map((walletData) => {
+          setState(prev => ({
+            ...prev,
+            isConnected: walletData.connected,
+            status: 'pending'
+          }))
+          return walletData.accounts
+        }),
         switchMap((accounts) => {
-          setState((prev) => ({ ...prev, status: 'pending' }))
           return withTokens(accounts)
             .then((accounts: any[]) => {
               setState({
                 accounts,
                 status: 'success',
                 hasLoaded: true,
+                isConnected: true
               })
             })
             .catch(() => {
-              setState({ accounts: [], status: 'error', hasLoaded: true })
+              setState({ 
+                accounts: [], 
+                status: 'error', 
+                hasLoaded: true,
+                isConnected: false
+              })
             })
         })
       )
@@ -83,7 +103,7 @@ export const useAccounts = () => {
     return () => {
       subscription.unsubscribe()
     }
-  }, [dAppToolkit, withTokens, setState])
+  }, [dAppToolkit, withTokens])
 
   return {
     state,
@@ -91,10 +111,20 @@ export const useAccounts = () => {
       setState((prev) => ({ ...prev, status: 'pending' }))
       return withTokens(state.accounts)
         .then((accounts: any) => {
-          setState({ accounts, status: 'success', hasLoaded: true })
+          setState({ 
+            accounts, 
+            status: 'success', 
+            hasLoaded: true,
+            isConnected: true 
+          })
         })
         .catch(() => {
-          setState({ accounts: [], status: 'error', hasLoaded: true })
+          setState({ 
+            accounts: [], 
+            status: 'error', 
+            hasLoaded: true,
+            isConnected: false 
+          })
         })
     }, [state.accounts, withTokens]),
   }
