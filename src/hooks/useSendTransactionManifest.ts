@@ -17,6 +17,11 @@ interface LiquidityParams {
   assetAmount: number;
 }
 
+interface RemoveLiquidityParams {
+  accountAddress: string;
+  poolUnits: number;
+}
+
 export const useSendTransactionManifest = () => {
   const transactionManifests = TransactionManifests(MARKET_INFO);
   const sendTransaction = useSendTransaction();
@@ -102,6 +107,24 @@ export const useSendTransactionManifest = () => {
         } catch (error) {
           console.error('Add liquidity error:', error);
           throw error instanceof Error ? error : new Error('Failed to add liquidity');
+        }
+      },
+
+      removeLiquidity: async (params: RemoveLiquidityParams) => {
+        try {
+          if (!params.accountAddress) {
+            throw new Error('Wallet not connected');
+          }
+
+          if (params.poolUnits <= 0) {
+            throw new Error('Invalid pool units amount');
+          }
+
+          const manifest = transactionManifests.removeLiquidity(params);
+          return await handleTransaction(manifest, 'Remove Liquidity');
+        } catch (error) {
+          console.error('Remove liquidity error:', error);
+          throw error instanceof Error ? error : new Error('Failed to remove liquidity');
         }
       }
     }),

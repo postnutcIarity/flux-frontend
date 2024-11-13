@@ -129,9 +129,45 @@ export const TransactionManifests = ({
     `.trim();
   };
 
+  const removeLiquidity = ({
+    accountAddress,
+    poolUnits,
+  }: {
+    accountAddress: string;
+    poolUnits: number;
+  }) => {
+    if (!accountAddress || !poolUnits) {
+      throw new Error('Invalid transaction parameters');
+    }
+
+    return `
+      CALL_METHOD
+        Address("${accountAddress}")
+        "withdraw"
+        Address("${poolUnitResource}")
+        Decimal("${poolUnits}")
+      ;
+      TAKE_ALL_FROM_WORKTOP
+        Address("${poolUnitResource}")
+        Bucket("pool_units")
+      ;
+      CALL_METHOD
+        Address("${yieldAMMComponent}")
+        "remove_liquidity"
+        Bucket("pool_units")
+      ;
+      CALL_METHOD
+        Address("${accountAddress}")
+        "deposit_batch"
+        Expression("ENTIRE_WORKTOP")
+      ;
+    `.trim();
+  };
+
   return {
     swapExactPtForAsset,
     swapExactAssetForPt,
     addLiquidity,
+    removeLiquidity,
   };
 };
