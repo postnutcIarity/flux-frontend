@@ -36,8 +36,8 @@ export const TransactionManifests = ({
       ;
       CALL_METHOD
         Address("${accountAddress}")
-        "deposit"
-        Bucket("${assetResource}")
+        "deposit_batch"
+        Expression("ENTIRE_WORKTOP")
       ;
     `;
     console.log(transactionManifest);
