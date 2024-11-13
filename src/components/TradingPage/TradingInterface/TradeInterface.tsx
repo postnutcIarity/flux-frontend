@@ -1,14 +1,31 @@
 import React, { useState } from 'react';
 import { Calculator, ArrowDownUp } from 'lucide-react';
-import { useRadixDappToolkit } from '../../../hooks/useRadixDappToolkit';
+import { useFungibleTokenValue } from '../../../hooks/useFungibleTokenValue';
+import { MARKET_RESOURCES } from '../../../config/addresses';
+import { useConnectButtonState } from '../../../hooks/useConnectButtonState';
 
 export default function TradeInterface() {
-  const { isConnected } = useRadixDappToolkit();
+  const connectButtonState = useConnectButtonState();
   const [inputAmount, setInputAmount] = useState('');
   const [outputAmount, setOutputAmount] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [payToken, setPayToken] = useState('XRD');
-  const [receiveToken, setReceiveToken] = useState('USD0++');
+  const [payToken, setPayToken] = useState('PT');
+  const [receiveToken, setReceiveToken] = useState('LSU');
+
+  // Get token balances
+  const ptBalance = useFungibleTokenValue(MARKET_RESOURCES.PT);
+  const lsuBalance = useFungibleTokenValue(MARKET_RESOURCES.LSU);
+
+  const getBalance = (token: string) => {
+    switch (token) {
+      case 'PT':
+        return ptBalance || '0';
+      case 'LSU':
+        return lsuBalance || '0';
+      default:
+        return '0';
+    }
+  };
 
   const handleSwapTokens = () => {
     setPayToken(receiveToken);
@@ -17,20 +34,8 @@ export default function TradeInterface() {
     setOutputAmount(inputAmount);
   };
 
-  const handleConnectClick = () => {
-    const connectButton = document.querySelector('radix-connect-button button') as HTMLButtonElement;
-    if (connectButton) {
-      connectButton.click();
-    }
-  };
-
   const handleTrade = async () => {
-    if (!isConnected) {
-      handleConnectClick();
-      return;
-    }
-
-    if (!inputAmount) return;
+    if (connectButtonState !== 'success' || !inputAmount) return;
     setIsLoading(true);
 
     try {
@@ -42,6 +47,8 @@ export default function TradeInterface() {
       setIsLoading(false);
     }
   };
+
+  const isConnected = connectButtonState === 'success';
 
   return (
     <div className="space-y-4">
@@ -61,8 +68,8 @@ export default function TradeInterface() {
                 value={payToken}
                 onChange={(e) => setPayToken(e.target.value)}
               >
-                <option value="XRD">XRD</option>
-                <option value="USD0++">USD0++</option>
+                <option value="PT">PT</option>
+                <option value="LSU">LSU</option>
               </select>
               <input
                 type="number"
@@ -73,7 +80,7 @@ export default function TradeInterface() {
               />
             </div>
             <div className="text-right text-sm text-gray-400 mt-1">
-              Balance: {isConnected ? 'Loading...' : '0.00'}
+              Balance: {getBalance(payToken)}
             </div>
           </div>
         </div>
@@ -96,8 +103,8 @@ export default function TradeInterface() {
                 value={receiveToken}
                 onChange={(e) => setReceiveToken(e.target.value)}
               >
-                <option value="USD0++">USD0++</option>
-                <option value="XRD">XRD</option>
+                <option value="LSU">LSU</option>
+                <option value="PT">PT</option>
               </select>
               <input
                 type="number"
@@ -108,33 +115,30 @@ export default function TradeInterface() {
               />
             </div>
             <div className="text-right text-sm text-gray-400 mt-1">
-              Balance: {isConnected ? 'Loading...' : '0.00'}
+              Balance: {getBalance(receiveToken)}
             </div>
           </div>
         </div>
 
         <button
           onClick={handleTrade}
+          disabled={!isConnected || isLoading}
           className={`w-full py-4 rounded-lg font-semibold transition-colors ${
             isConnected
               ? isLoading
                 ? 'bg-blue-600 cursor-wait'
                 : 'bg-blue-500 hover:bg-blue-600'
-              : 'bg-gray-700 hover:bg-gray-600 cursor-pointer'
+              : 'bg-gray-700 text-gray-400 cursor-not-allowed'
           }`}
         >
-          {!isConnected
-            ? 'Connect Wallet'
-            : isLoading
-            ? 'Processing...'
-            : 'Trade'}
+          {isConnected ? (isLoading ? 'Processing...' : 'Swap') : 'Connect Wallet'}
         </button>
 
         {isConnected && (
           <div className="bg-gray-900/50 rounded-lg p-4 space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-gray-400">Rate</span>
-              <span>1 {payToken} = {payToken === 'XRD' ? '0.0234' : '42.735'} {receiveToken}</span>
+              <span>1 {payToken} = {payToken === 'PT' ? '0.9234' : '1.0825'} {receiveToken}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-gray-400">Price Impact</span>
