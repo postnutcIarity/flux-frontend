@@ -6,24 +6,31 @@ import { useConnectButtonState } from '../../../hooks/useConnectButtonState';
 import { useSendTransactionManifest } from '../../../hooks/useSendTransactionManifest';
 import { useAccounts } from '../../../hooks/useAccounts';
 
+type Market = 'PT' | 'YT';
+
 export default function TradeInterface() {
-  const connectButtonState = useConnectButtonState();
+  const [market, setMarket] = useState<Market>('PT');
   const [inputAmount, setInputAmount] = useState('');
   const [outputAmount, setOutputAmount] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [payToken, setPayToken] = useState('PT');
   const [receiveToken, setReceiveToken] = useState('LSU');
+
   const { state: accountState } = useAccounts();
   const sendTransactionManifest = useSendTransactionManifest();
+  const connectButtonState = useConnectButtonState();
 
   const ptBalance = useFungibleTokenValue(MARKET_INFO.ptResource);
+  const ytBalance = useFungibleTokenValue(MARKET_INFO.ytResource);
   const lsuBalance = useFungibleTokenValue(MARKET_INFO.assetResource);
 
   const getBalance = (token: string) => {
     switch (token) {
       case 'PT':
         return ptBalance || '0';
+      case 'YT':
+        return ytBalance || '0';
       case 'LSU':
         return lsuBalance || '0';
       default:
@@ -53,9 +60,18 @@ export default function TradeInterface() {
     };
   };
 
+  const handleMarketChange = (newMarket: Market) => {
+    setMarket(newMarket);
+    setPayToken(newMarket);
+    setReceiveToken('LSU');
+    setInputAmount('');
+    setOutputAmount('');
+    setError(null);
+  };
+
   const handlePayTokenChange = (newToken: string) => {
     setPayToken(newToken);
-    setReceiveToken(newToken === 'PT' ? 'LSU' : 'PT');
+    setReceiveToken(newToken === market ? 'LSU' : market);
     setInputAmount('');
     setOutputAmount('');
     setError(null);
@@ -63,7 +79,7 @@ export default function TradeInterface() {
 
   const handleReceiveTokenChange = (newToken: string) => {
     setReceiveToken(newToken);
-    setPayToken(newToken === 'PT' ? 'LSU' : 'PT');
+    setPayToken(newToken === market ? 'LSU' : market);
     setInputAmount('');
     setOutputAmount('');
     setError(null);
@@ -84,10 +100,16 @@ export default function TradeInterface() {
     try {
       const params = validateTransaction();
 
-      if (payToken === 'PT') {
-        await sendTransactionManifest().swapExactPtForAsset(params);
+      // Note: These are placeholder calls until YT market transactions are implemented
+      if (market === 'PT') {
+        if (payToken === 'PT') {
+          await sendTransactionManifest().swapExactPtForAsset(params);
+        } else {
+          await sendTransactionManifest().swapExactAssetForPt(params);
+        }
       } else {
-        await sendTransactionManifest().swapExactAssetForPt(params);
+        // YT market transactions will be implemented here
+        throw new Error('YT market trading coming soon');
       }
 
       setInputAmount('');
@@ -104,7 +126,29 @@ export default function TradeInterface() {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
+      <div className="flex justify-between items-center">
+        <div className="flex space-x-2">
+          <button
+            onClick={() => handleMarketChange('PT')}
+            className={`px-4 py-2 rounded-lg transition-colors ${
+              market === 'PT'
+                ? 'bg-blue-500 text-white'
+                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+            }`}
+          >
+            PT Market
+          </button>
+          <button
+            onClick={() => handleMarketChange('YT')}
+            className={`px-4 py-2 rounded-lg transition-colors ${
+              market === 'YT'
+                ? 'bg-blue-500 text-white'
+                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+            }`}
+          >
+            YT Market
+          </button>
+        </div>
         <button className="p-2 rounded-lg bg-gray-700 hover:bg-gray-600">
           <Calculator className="h-5 w-5" />
         </button>
@@ -121,7 +165,7 @@ export default function TradeInterface() {
                 onChange={(e) => handlePayTokenChange(e.target.value)}
                 disabled={isLoading}
               >
-                <option value="PT">PT</option>
+                <option value={market}>{market}</option>
                 <option value="LSU">LSU</option>
               </select>
               <input
@@ -160,7 +204,7 @@ export default function TradeInterface() {
                 disabled={isLoading}
               >
                 <option value="LSU">LSU</option>
-                <option value="PT">PT</option>
+                <option value={market}>{market}</option>
               </select>
               <input
                 type="number"
@@ -209,7 +253,7 @@ export default function TradeInterface() {
           <div className="bg-gray-900/50 rounded-lg p-4 space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-gray-400">Rate</span>
-              <span>1 {payToken} = {payToken === 'PT' ? '0.9234' : '1.0825'} {receiveToken}</span>
+              <span>1 {payToken} = {payToken === market ? '0.9234' : '1.0825'} {receiveToken}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-gray-400">Price Impact</span>
