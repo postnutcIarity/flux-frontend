@@ -11,12 +11,12 @@ export default function TradeInterface() {
   const [inputAmount, setInputAmount] = useState('');
   const [outputAmount, setOutputAmount] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [payToken, setPayToken] = useState('PT');
   const [receiveToken, setReceiveToken] = useState('LSU');
   const { state: accountState } = useAccounts();
   const sendTransactionManifest = useSendTransactionManifest();
 
-  // Get token balances
   const ptBalance = useFungibleTokenValue(MARKET_INFO.ptResource);
   const lsuBalance = useFungibleTokenValue(MARKET_INFO.assetResource);
 
@@ -31,14 +31,42 @@ export default function TradeInterface() {
     }
   };
 
+  const validateTransaction = () => {
+    if (!accountState.accounts[0]) {
+      throw new Error('Please connect your wallet');
+    }
+
+    const inputValue = parseFloat(inputAmount);
+    if (isNaN(inputValue) || inputValue <= 0) {
+      throw new Error('Please enter a valid amount');
+    }
+
+    const balance = parseFloat(getBalance(payToken));
+    if (inputValue > balance) {
+      throw new Error(`Insufficient ${payToken} balance`);
+    }
+
+    return {
+      accountAddress: accountState.accounts[0].address,
+      inputTokenValue: inputValue,
+      outputTokenValue: parseFloat(outputAmount) || 0,
+    };
+  };
+
   const handlePayTokenChange = (newToken: string) => {
     setPayToken(newToken);
     setReceiveToken(newToken === 'PT' ? 'LSU' : 'PT');
+    setInputAmount('');
+    setOutputAmount('');
+    setError(null);
   };
 
   const handleReceiveTokenChange = (newToken: string) => {
     setReceiveToken(newToken);
     setPayToken(newToken === 'PT' ? 'LSU' : 'PT');
+    setInputAmount('');
+    setOutputAmount('');
+    setError(null);
   };
 
   const handleSwapTokens = () => {
@@ -46,27 +74,27 @@ export default function TradeInterface() {
     setReceiveToken(payToken);
     setInputAmount(outputAmount);
     setOutputAmount(inputAmount);
+    setError(null);
   };
 
   const handleTrade = async () => {
-    if (connectButtonState !== 'success' || !inputAmount || !accountState.accounts[0]) return;
     setIsLoading(true);
+    setError(null);
 
     try {
-      const accountAddress = accountState.accounts[0].address;
-      const inputTokenValue = parseFloat(inputAmount);
-      const outputTokenValue = parseFloat(outputAmount);
+      const params = validateTransaction();
 
       if (payToken === 'PT') {
-        await sendTransactionManifest().swapExactPtForAsset({
-          accountAddress,
-          inputTokenValue,
-          outputTokenValue,
-        });
+        await sendTransactionManifest().swapExactPtForAsset(params);
+      } else {
+        await sendTransactionManifest().swapExactAssetForPt(params);
       }
-      // Add other swap types here when needed
-    } catch (error) {
-      console.error('Transaction error:', error);
+
+      setInputAmount('');
+      setOutputAmount('');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Transaction failed';
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -91,6 +119,7 @@ export default function TradeInterface() {
                 className="bg-transparent text-lg focus:outline-none"
                 value={payToken}
                 onChange={(e) => handlePayTokenChange(e.target.value)}
+                disabled={isLoading}
               >
                 <option value="PT">PT</option>
                 <option value="LSU">LSU</option>
@@ -101,6 +130,7 @@ export default function TradeInterface() {
                 value={inputAmount}
                 onChange={(e) => setInputAmount(e.target.value)}
                 className="bg-transparent text-right text-lg focus:outline-none w-1/2"
+                disabled={isLoading}
               />
             </div>
             <div className="text-right text-sm text-gray-400 mt-1">
@@ -113,6 +143,7 @@ export default function TradeInterface() {
           <button 
             className="p-2 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors"
             onClick={handleSwapTokens}
+            disabled={isLoading}
           >
             <ArrowDownUp className="h-4 w-4" />
           </button>
@@ -126,6 +157,7 @@ export default function TradeInterface() {
                 className="bg-transparent text-lg focus:outline-none"
                 value={receiveToken}
                 onChange={(e) => handleReceiveTokenChange(e.target.value)}
+                disabled={isLoading}
               >
                 <option value="LSU">LSU</option>
                 <option value="PT">PT</option>
@@ -136,6 +168,7 @@ export default function TradeInterface() {
                 value={outputAmount}
                 onChange={(e) => setOutputAmount(e.target.value)}
                 className="bg-transparent text-right text-lg focus:outline-none w-1/2"
+                disabled={isLoading}
               />
             </div>
             <div className="text-right text-sm text-gray-400 mt-1">
@@ -144,18 +177,32 @@ export default function TradeInterface() {
           </div>
         </div>
 
+        {error && (
+          <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+            {error}
+          </div>
+        )}
+
         <button
           onClick={handleTrade}
-          disabled={!isConnected || isLoading}
+          disabled={!isConnected || isLoading || !inputAmount}
           className={`w-full py-4 rounded-lg font-semibold transition-colors ${
             isConnected
               ? isLoading
                 ? 'bg-blue-600 cursor-wait'
+                : !inputAmount
+                ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
                 : 'bg-blue-500 hover:bg-blue-600'
               : 'bg-gray-700 text-gray-400 cursor-not-allowed'
           }`}
         >
-          {isConnected ? (isLoading ? 'Processing...' : 'Swap') : 'Connect Wallet'}
+          {!isConnected 
+            ? 'Connect Wallet' 
+            : isLoading 
+            ? 'Processing...' 
+            : !inputAmount 
+            ? 'Enter an amount' 
+            : 'Swap'}
         </button>
 
         {isConnected && (
