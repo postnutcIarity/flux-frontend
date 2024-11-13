@@ -1,58 +1,156 @@
-import React from 'react';
-import { useParams } from 'react-router-dom';
-import { useRadixDappToolkit } from '../hooks/useRadixDappToolkit';
-import TradingChart from '../components/TradingPage/TradingChart';
-import MarketInfo from '../components/TradingPage/MarketInfo';
-import TradeHistory from '../components/TradingPage/TradeHistory';
-import TradingInterface from '../components/TradingPage/TradingInterface';
-import { useGetEntityDetails } from '../hooks/useGetEntityDetails';
-import { useGetFungibleVaultsAmount } from '../hooks/useGetFungibleVaultsAmount';
-import { formatCurrency, formatRate } from '../utils/formatters';
-import { MARKET_ADDRESSES } from '../config/addresses';
+import React, { useState } from 'react';
+import { Calculator, ArrowDownUp } from 'lucide-react';
+import { useFungibleTokenValue } from '../hooks/useFungibleTokenValue';
+import { MARKET_RESOURCES } from '../config/addresses';
+import { useConnectButtonState } from '../hooks/useConnectButtonState';
 
-export default function TradingPage() {
-  const { marketId } = useParams();
-  const { isConnected } = useRadixDappToolkit();
+export default function TradeInterface() {
+  const connectButtonState = useConnectButtonState();
+  const [inputAmount, setInputAmount] = useState('');
+  const [outputAmount, setOutputAmount] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [payToken, setPayToken] = useState('PT');
+  const [receiveToken, setReceiveToken] = useState('LSU');
 
-  // Get market details
-  const { state: marketData, loading: marketLoading } = useGetEntityDetails(
-    MARKET_ADDRESSES.LSULP
-  );
+  // Get token balances
+  const ptBalance = useFungibleTokenValue(MARKET_RESOURCES.PT);
+  const lsuBalance = useFungibleTokenValue(MARKET_RESOURCES.LSU);
 
-  // Get liquidity data
-  const { totalAmount: liquidityAmount, loading: liquidityLoading } = useGetFungibleVaultsAmount(
-    marketData?.poolComponent
-  );
-
-  const marketInfo = {
-    liquidity: liquidityLoading ? 'Loading...' : formatCurrency(liquidityAmount),
-    volume24h: '$2.73M',
-    underlyingAPY: '8.5%',
-    impliedAPY: marketData ? formatRate(marketData.impliedRate) : 'Loading...'
+  const getBalance = (token: string) => {
+    switch (token) {
+      case 'PT':
+        return ptBalance || '0';
+      case 'LSU':
+        return lsuBalance || '0';
+      default:
+        return '0';
+    }
   };
 
-  if (marketLoading) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center">Loading market data...</div>
-      </div>
-    );
-  }
+  const handleSwapTokens = () => {
+    setPayToken(receiveToken);
+    setReceiveToken(payToken);
+    setInputAmount(outputAmount);
+    setOutputAmount(inputAmount);
+  };
+
+  const handleTrade = async () => {
+    if (connectButtonState !== 'success' || !inputAmount) return;
+    setIsLoading(true);
+
+    try {
+      // Trading logic here
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulated transaction
+    } catch (error) {
+      console.error('Transaction error:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const isConnected = connectButtonState === 'success';
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <MarketInfo {...marketInfo} />
-      
-      <div className="grid lg:grid-cols-3 gap-6 mb-8">
-        <div className="lg:col-span-2 order-2 lg:order-1">
-          <TradingChart />
-        </div>
-        <div className="h-full order-1 lg:order-2">
-          <TradingInterface />
-        </div>
+    <div className="space-y-4">
+      <div className="flex justify-end">
+        <button className="p-2 rounded-lg bg-gray-700 hover:bg-gray-600">
+          <Calculator className="h-5 w-5" />
+        </button>
       </div>
 
-      <TradeHistory />
+      <div className="space-y-4">
+        <div className="relative">
+          <label className="block text-sm text-gray-400 mb-2">You Pay</label>
+          <div className="bg-gray-900 rounded-lg p-4">
+            <div className="flex justify-between items-center">
+              <select 
+                className="bg-transparent text-lg focus:outline-none"
+                value={payToken}
+                onChange={(e) => setPayToken(e.target.value)}
+              >
+                <option value="PT">PT</option>
+                <option value="LSU">LSU</option>
+              </select>
+              <input
+                type="number"
+                placeholder="0.0"
+                value={inputAmount}
+                onChange={(e) => setInputAmount(e.target.value)}
+                className="bg-transparent text-right text-lg focus:outline-none w-1/2"
+              />
+            </div>
+            <div className="text-right text-sm text-gray-400 mt-1">
+              Balance: {getBalance(payToken)}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex justify-center -my-2">
+          <button 
+            className="p-2 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors"
+            onClick={handleSwapTokens}
+          >
+            <ArrowDownUp className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div>
+          <label className="block text-sm text-gray-400 mb-2">You Receive</label>
+          <div className="bg-gray-900 rounded-lg p-4">
+            <div className="flex justify-between items-center">
+              <select 
+                className="bg-transparent text-lg focus:outline-none"
+                value={receiveToken}
+                onChange={(e) => setReceiveToken(e.target.value)}
+              >
+                <option value="LSU">LSU</option>
+                <option value="PT">PT</option>
+              </select>
+              <input
+                type="number"
+                placeholder="0.0"
+                value={outputAmount}
+                onChange={(e) => setOutputAmount(e.target.value)}
+                className="bg-transparent text-right text-lg focus:outline-none w-1/2"
+              />
+            </div>
+            <div className="text-right text-sm text-gray-400 mt-1">
+              Balance: {getBalance(receiveToken)}
+            </div>
+          </div>
+        </div>
+
+        <button
+          onClick={handleTrade}
+          disabled={!isConnected || isLoading}
+          className={`w-full py-4 rounded-lg font-semibold transition-colors ${
+            isConnected
+              ? isLoading
+                ? 'bg-blue-600 cursor-wait'
+                : 'bg-blue-500 hover:bg-blue-600'
+              : 'bg-gray-700 text-gray-400 cursor-not-allowed'
+          }`}
+        >
+          {isConnected ? (isLoading ? 'Processing...' : 'Swap') : 'Connect Wallet'}
+        </button>
+
+        {isConnected && (
+          <div className="bg-gray-900/50 rounded-lg p-4 space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-400">Rate</span>
+              <span>1 {payToken} = {payToken === 'PT' ? '0.9234' : '1.0825'} {receiveToken}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-400">Price Impact</span>
+              <span className="text-green-400">{'<0.01%'}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-400">Network Fee</span>
+              <span>~0.01 XRD</span>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
