@@ -3,6 +3,7 @@ import { Calculator, ArrowDownUp } from 'lucide-react';
 import { useFungibleTokenValue } from '../../../hooks/useFungibleTokenValue';
 import { MARKET_INFO } from '../../../config/addresses';
 import { useConnectButtonState } from '../../../hooks/useConnectButtonState';
+import { useSendTransactionManifest } from '../../../hooks/useSendTransactionManifest';
 
 export default function TradeInterface() {
   const connectButtonState = useConnectButtonState();
@@ -11,6 +12,7 @@ export default function TradeInterface() {
   const [isLoading, setIsLoading] = useState(false);
   const [payToken, setPayToken] = useState('PT');
   const [receiveToken, setReceiveToken] = useState('LSU');
+  const swapExactPtForAsset = useSendTransactionManifest()()
 
   // Get token balances
   const ptBalance = useFungibleTokenValue(MARKET_INFO.ptResource);
